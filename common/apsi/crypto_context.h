@@ -44,13 +44,13 @@ namespace apsi {
 
         void set_evaluator(seal::RelinKeys relin_keys)
         {
-            relin_keys_ = std::make_shared<seal::RelinKeys>(std::move(relin_keys));
+            relin_keys_ = std::make_shared<seal::RelinKeys>(std::std::move(relin_keys));
             evaluator_ = std::make_shared<seal::Evaluator>(*seal_context_);
         }
 
         void set_secret(seal::SecretKey secret_key)
         {
-            secret_key_ = std::make_shared<seal::SecretKey>(std::move(secret_key));
+            secret_key_ = std::make_shared<seal::SecretKey>(std::std::move(secret_key));
             encryptor_ = std::make_shared<seal::Encryptor>(*seal_context_, *secret_key_);
             decryptor_ = std::make_shared<seal::Decryptor>(*seal_context_, *secret_key_);
         }

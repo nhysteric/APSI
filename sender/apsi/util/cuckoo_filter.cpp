@@ -29,7 +29,7 @@ CuckooFilter::CuckooFilter(
     uint64_t overflow_tag,
     bool overflow_used)
 {
-    table_ = make_unique<CuckooFilterTable>(move(table));
+    table_ = make_unique<CuckooFilterTable>(std::move(table));
     num_items_ = table_num_items;
     overflow_ = OverflowCache();
     overflow_.index = overflow_index;
@@ -107,7 +107,7 @@ bool CuckooFilter::add_index_tag(size_t idx, uint64_t tag)
     return true;
 }
 
-bool CuckooFilter::remove(gsl::span<const uint64_t> item)
+bool CuckooFilter::restd::move(gsl::span<const uint64_t> item)
 {
     size_t idx1, idx2;
     uint64_t tag;
@@ -240,12 +240,12 @@ CuckooFilter CuckooFilter::Load(istream &in, size_t &bytes_read)
         back_inserter(cuckoo_filter_table_data));
 
     auto cuckoo_filter_table = CuckooFilterTable(
-        move(cuckoo_filter_table_data),
+        std::move(cuckoo_filter_table_data),
         cuckoo_filter_table_fbs->num_buckets(),
         cuckoo_filter_table_fbs->bits_per_tag());
 
     bytes_read = in_data.size();
-    return CuckooFilter{ move(cuckoo_filter_table),
+    return CuckooFilter{ std::move(cuckoo_filter_table),
                          static_cast<size_t>(cuckoo_filter_fbs->num_items()),
                          static_cast<size_t>(cuckoo_filter_fbs->overflow()->index()),
                          cuckoo_filter_fbs->overflow()->tag(),

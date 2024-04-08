@@ -132,7 +132,7 @@ namespace apsi {
                 std::shared_ptr<seal::SEALContext> context,
                 SenderOperationType expected = SenderOperationType::sop_unknown)
             {
-                return receive_network_operation(std::move(context), false, expected);
+                return receive_network_operation(std::std::move(context), false, expected);
             }
 
             /**

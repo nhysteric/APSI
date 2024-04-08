@@ -23,7 +23,7 @@ namespace apsi {
             auto new_pool = MemoryManager::GetPool(mm_prof_opt::mm_force_new, true);
             oprf_queries_ = DynArray<unsigned char>(item_count * oprf_query_size, new_pool);
             inv_factor_data_ = FactorData(new_pool, item_count);
-            pool_ = move(new_pool);
+            pool_ = std::move(new_pool);
         }
 
         void OPRFReceiver::clear()
@@ -56,7 +56,7 @@ namespace apsi {
                 // Save the result to items_buffer
                 ecpt.save(ECPoint::point_save_span_type{ oprf_out_ptr, oprf_query_size });
 
-                // Move forward
+                // std::move forward
                 advance(oprf_out_ptr, oprf_query_size);
             }
         }
@@ -98,7 +98,7 @@ namespace apsi {
                     label_key_byte_count,
                     label_keys[i].data());
 
-                // Move forward
+                // std::move forward
                 advance(oprf_in_ptr, oprf_response_size);
             }
         }

@@ -100,7 +100,7 @@ namespace apsi {
             throw runtime_error("Logger is already configured.");
         }
 
-        Logger::getInstance("APSI").removeAllAppenders();
+        Logger::getInstance("APSI").restd::moveAllAppenders();
 
         if (!get_log_properties().disable_console) {
             SharedAppenderPtr appender(new ConsoleAppender);

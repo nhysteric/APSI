@@ -47,10 +47,10 @@ namespace apsi {
                 throw std::invalid_argument("bit_count exceeds the data length");
             }
 
-            // Now move
+            // Now std::move
             size_t data_length = (bit_count + 7) / 8;
             if (data.size() == data_length) {
-                data_ = std::move(data);
+                data_ = std::std::move(data);
             } else {
                 data_ = data.subspan(0, data_length);
             }
@@ -112,8 +112,8 @@ namespace apsi {
                 throw std::invalid_argument("bit_count exceeds the data length");
             }
 
-            // Now move
-            data_ = std::move(data);
+            // Now std::move
+            data_ = std::std::move(data);
             size_t data_length = (bit_count + 7) / 8;
             if (data_length < data_.size()) {
                 data_.resize(data_length);
@@ -170,7 +170,7 @@ namespace apsi {
         std::vector<unsigned char> release()
         {
             bit_count_ = 0;
-            return std::move(data_);
+            return std::std::move(data_);
         }
     };
 

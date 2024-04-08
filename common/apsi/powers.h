@@ -214,7 +214,7 @@ namespace apsi {
                         state = NodeState::Computing;
                         node_states[power_idx].compare_exchange_strong(state, NodeState::Computed);
 
-                        // Move on to the next node
+                        // std::move on to the next node
                         power_idx = (power_idx + 1) % target_powers_count;
                         continue;
                     }
@@ -249,7 +249,7 @@ namespace apsi {
                         node_states[power_idx].compare_exchange_strong(
                             computing_state, NodeState::Uncomputed);
 
-                        // Move on to the next node
+                        // std::move on to the next node
                         power_idx = (power_idx + 1) % target_powers_count;
                         continue;
                     }
@@ -261,7 +261,7 @@ namespace apsi {
                     state = NodeState::Computing;
                     node_states[power_idx].compare_exchange_strong(state, NodeState::Computed);
 
-                    // Move on to the next node
+                    // std::move on to the next node
                     power_idx = (power_idx + 1) % target_powers_count;
                 }
             };

@@ -209,7 +209,7 @@ namespace APSITests {
             ASSERT_EQ(1, sender_db.get_bin_bundle_count());
             ASSERT_TRUE(sender_db.has_item(Item(0, 0)));
 
-            // Clear and check that items were removed
+            // Clear and check that items were restd::moved
             sender_db.clear();
             ASSERT_TRUE(sender_db.get_hashed_items().empty());
             ASSERT_EQ(0, sender_db.get_bin_bundle_count());
@@ -242,7 +242,7 @@ namespace APSITests {
             // Accessing cache beyond range
             ASSERT_THROW(auto cache = sender_db.get_cache_at(bundle_idx_count), out_of_range);
 
-            // Clear and check that items were removed
+            // Clear and check that items were restd::moved
             sender_db.clear();
             ASSERT_TRUE(sender_db.get_hashed_items().empty());
             ASSERT_EQ(0, sender_db.get_bin_bundle_count());
@@ -281,7 +281,7 @@ namespace APSITests {
             }
             ASSERT_FALSE(sender_db.has_item(Item(1000, 1001)));
 
-            // Clear and check that items were removed
+            // Clear and check that items were restd::moved
             sender_db.clear();
             ASSERT_TRUE(sender_db.get_hashed_items().empty());
             ASSERT_EQ(0, sender_db.get_bin_bundle_count());
@@ -315,7 +315,7 @@ namespace APSITests {
             // Accessing cache beyond range
             ASSERT_THROW(auto cache = sender_db.get_cache_at(bundle_idx_count), out_of_range);
 
-            // Clear and check that items were removed
+            // Clear and check that items were restd::moved
             sender_db.clear();
             ASSERT_TRUE(sender_db.get_hashed_items().empty());
             ASSERT_EQ(0, sender_db.get_bin_bundle_count());
@@ -364,7 +364,7 @@ namespace APSITests {
             label = sender_db.get_label(Item(1, 0));
             ASSERT_EQ(create_label(1, 20), label);
 
-            // Clear and check that items were removed
+            // Clear and check that items were restd::moved
             sender_db.clear();
             ASSERT_TRUE(sender_db.get_hashed_items().empty());
             ASSERT_EQ(0, sender_db.get_bin_bundle_count());
@@ -412,7 +412,7 @@ namespace APSITests {
             }
             ASSERT_FALSE(sender_db.has_item(Item(1000, 1001)));
 
-            // Clear and check that items were removed
+            // Clear and check that items were restd::moved
             sender_db.clear();
             ASSERT_TRUE(sender_db.get_hashed_items().empty());
             ASSERT_EQ(0, sender_db.get_bin_bundle_count());
@@ -448,7 +448,7 @@ namespace APSITests {
             // Accessing cache beyond range
             ASSERT_THROW(auto cache = sender_db.get_cache_at(bundle_idx_count), out_of_range);
 
-            // Clear and check that items were removed
+            // Clear and check that items were restd::moved
             sender_db.clear();
             ASSERT_TRUE(sender_db.get_hashed_items().empty());
             ASSERT_EQ(0, sender_db.get_bin_bundle_count());
@@ -458,7 +458,7 @@ namespace APSITests {
         test_fun(get_params2());
     }
 
-    TEST(SenderDBTests, Remove)
+    TEST(SenderDBTests, Restd::move)
     {
         auto test_fun = [](shared_ptr<PSIParams> params) {
             // We use a labeled SenderDB here to end up with multiple BinBundles more quickly. This
@@ -471,11 +471,11 @@ namespace APSITests {
             ASSERT_EQ(1, sender_db.get_hashed_items().size());
             ASSERT_EQ(1, sender_db.get_bin_bundle_count());
 
-            // Try remove item that doesn't exist
-            ASSERT_THROW(sender_db.remove(Item(1, 0)), logic_error);
+            // Try restd::move item that doesn't exist
+            ASSERT_THROW(sender_db.restd::move(Item(1, 0)), logic_error);
 
-            // Remove inserted item
-            sender_db.remove(Item(0, 0));
+            // Restd::move inserted item
+            sender_db.restd::move(Item(0, 0));
             ASSERT_EQ(0, sender_db.get_hashed_items().size());
             ASSERT_EQ(0, sender_db.get_bin_bundle_count());
             ASSERT_FALSE(sender_db.has_item(Item(0, 0)));
@@ -493,16 +493,16 @@ namespace APSITests {
             ASSERT_EQ(val, sender_db.get_hashed_items().size());
             ASSERT_EQ(2, sender_db.get_bin_bundle_count());
 
-            // Now remove the first one; we should immediately drop to 2 BinBundles
+            // Now restd::move the first one; we should immediately drop to 2 BinBundles
             val--;
-            sender_db.remove(Item(val, ~val));
+            sender_db.restd::move(Item(val, ~val));
             ASSERT_EQ(val, sender_db.get_hashed_items().size());
             ASSERT_EQ(1, sender_db.get_bin_bundle_count());
 
-            // Remove all inserted items, one-by-one
+            // Restd::move all inserted items, one-by-one
             while (val > 0) {
                 val--;
-                sender_db.remove(Item(val, ~val));
+                sender_db.restd::move(Item(val, ~val));
             }
 
             // No BinBundles should be left at this time
@@ -517,7 +517,7 @@ namespace APSITests {
                 val++;
             }
 
-            // Now remove all
+            // Now restd::move all
             sender_db.clear();
 
             // No BinBundles should be left at this time
@@ -537,7 +537,7 @@ namespace APSITests {
             stringstream ss;
             size_t save_size = sender_db.save(ss);
             auto other = SenderDB::Load(ss);
-            auto other_sdb = move(other.first);
+            auto other_sdb = std::move(other.first);
 
             ASSERT_EQ(save_size, other.second);
             ASSERT_EQ(params->to_string(), other_sdb.get_params().to_string());
@@ -553,7 +553,7 @@ namespace APSITests {
 
             save_size = sender_db.save(ss);
             other = SenderDB::Load(ss);
-            other_sdb = move(other.first);
+            other_sdb = std::move(other.first);
 
             ASSERT_EQ(save_size, other.second);
             ASSERT_EQ(params->to_string(), other_sdb.get_params().to_string());
@@ -575,7 +575,7 @@ namespace APSITests {
 
             save_size = sender_db.save(ss);
             other = SenderDB::Load(ss);
-            other_sdb = move(other.first);
+            other_sdb = std::move(other.first);
 
             ASSERT_EQ(save_size, other.second);
             ASSERT_EQ(params->to_string(), other_sdb.get_params().to_string());
@@ -605,7 +605,7 @@ namespace APSITests {
             stringstream ss;
             size_t save_size = sender_db.save(ss);
             auto other = SenderDB::Load(ss);
-            auto other_sdb = move(other.first);
+            auto other_sdb = std::move(other.first);
 
             ASSERT_EQ(save_size, other.second);
             ASSERT_EQ(params->to_string(), other_sdb.get_params().to_string());
@@ -621,7 +621,7 @@ namespace APSITests {
 
             save_size = sender_db.save(ss);
             other = SenderDB::Load(ss);
-            other_sdb = move(other.first);
+            other_sdb = std::move(other.first);
 
             ASSERT_EQ(save_size, other.second);
             ASSERT_EQ(params->to_string(), other_sdb.get_params().to_string());
@@ -644,7 +644,7 @@ namespace APSITests {
 
             save_size = sender_db.save(ss);
             other = SenderDB::Load(ss);
-            other_sdb = move(other.first);
+            other_sdb = std::move(other.first);
 
             ASSERT_EQ(save_size, other.second);
             ASSERT_EQ(params->to_string(), other_sdb.get_params().to_string());
@@ -697,7 +697,7 @@ namespace APSITests {
             // Attempt operations on a stripped SenderDB
             ASSERT_THROW(sender_db.has_item(Item(0, 0)), logic_error);
             ASSERT_THROW(sender_db.insert_or_assign(Item(1, 2)), logic_error);
-            ASSERT_THROW(sender_db.remove(Item(0, 0)), logic_error);
+            ASSERT_THROW(sender_db.restd::move(Item(0, 0)), logic_error);
 
             // Save, load, and check sizes
             stringstream ss;
@@ -749,7 +749,7 @@ namespace APSITests {
             ASSERT_THROW(sender_db.has_item(Item(0, 0)), logic_error);
             ASSERT_THROW(sender_db.get_label(Item(0, 0)), logic_error);
             ASSERT_THROW(sender_db.insert_or_assign(Item(1, 2)), logic_error);
-            ASSERT_THROW(sender_db.remove(Item(0, 0)), logic_error);
+            ASSERT_THROW(sender_db.restd::move(Item(0, 0)), logic_error);
 
             // Save, load, and check sizes
             stringstream ss;

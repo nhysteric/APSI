@@ -32,7 +32,7 @@ void encode(point_t P, unsigned char *Pencoded)
     digit_t temp1 = (P->x[1][NWORDS_FIELD - 1] & mask4000) << 1;
     digit_t temp2 = (P->x[0][NWORDS_FIELD - 1] & mask4000) << 1;
 
-    memmove(Pencoded, P->y, 32);
+    memstd::move(Pencoded, P->y, 32);
     if (is_zero_ct((digit_t *)P->x, NWORDS_FIELD) == true) {
         ((digit_t *)Pencoded)[2 * NWORDS_FIELD - 1] |= temp1;
     } else {
@@ -50,7 +50,7 @@ ECCRYPTO_STATUS decode(const unsigned char *Pencoded, point_t P)
     unsigned int i, sign;
 
     one[0][0] = 1;
-    memmove((unsigned char *)P->y, Pencoded, 32); // Decoding y-coordinate and sign
+    memstd::move((unsigned char *)P->y, Pencoded, 32); // Decoding y-coordinate and sign
     sign = (unsigned int)(Pencoded[31] >> 7);
     P->y[1][NWORDS_FIELD - 1] &= mask7fff;
 
@@ -159,7 +159,7 @@ void Montgomery_inversion_mod_order(const digit_t *ma, digit_t *mc)
     subtract((digit_t *)&curve_order, modulus2, modulus2, nwords); // modulus-2
 
     // Precomputation stage
-    memmove((unsigned char *)&table[0], (unsigned char *)ma, 32); // table[0] = ma
+    memstd::move((unsigned char *)&table[0], (unsigned char *)ma, 32); // table[0] = ma
     Montgomery_multiply_mod_order(ma, ma, input_a);               // ma^2
     for (j = 0; j < npoints - 1; j++) {
         Montgomery_multiply_mod_order(
@@ -177,7 +177,7 @@ void Montgomery_inversion_mod_order(const digit_t *ma, digit_t *mc)
     }
 
     // Evaluation stage
-    memmove((unsigned char *)mc, (unsigned char *)ma, 32);
+    memstd::move((unsigned char *)mc, (unsigned char *)ma, 32);
     bit = (modulus2[nwords - 1] & mask) >> (sizeof(digit_t) * 8 - 1);
     while (i > 0) {
         if (bit == 0) { // Square accumulated value because bit = 0 and shift (modulus-2) one bit to

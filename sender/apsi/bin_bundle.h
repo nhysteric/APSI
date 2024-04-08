@@ -87,7 +87,7 @@ namespace apsi {
             /**
             Constructs an uninitialized Plaintext polynomial using the given crypto context
             */
-            BatchedPlaintextPolyn(CryptoContext context) : crypto_context(std::move(context))
+            BatchedPlaintextPolyn(CryptoContext context) : crypto_context(std::std::move(context))
             {}
 
             /**
@@ -328,11 +328,11 @@ namespace apsi {
             bool try_multi_overwrite(const std::vector<T> &item_labels, std::size_t start_bin_idx);
 
             /**
-            Attempts to remove the stored items and labels. Returns true iff it found a contiguous
-            sequence of given items and the data was successfully removed. If no such sequence was
-            found, this BinBundle is not mutated.
+            Attempts to restd::move the stored items and labels. Returns true iff it found a
+            contiguous sequence of given items and the data was successfully restd::moved. If no
+            such sequence was found, this BinBundle is not mutated.
             */
-            bool try_multi_remove(const std::vector<felt_t> &items, std::size_t start_bin_idx);
+            bool try_multi_restd::move(const std::vector<felt_t> &items, std::size_t start_bin_idx);
 
             /**
             Sets the given labels to the set of labels associated with the sequence of items in this

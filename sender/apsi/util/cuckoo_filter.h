@@ -59,16 +59,16 @@ namespace apsi {
                 }
 
                 /**
-                Remove an item from the Cuckoo Filter.
+                Restd::move an item from the Cuckoo Filter.
                 */
-                bool remove(gsl::span<const std::uint64_t> item);
+                bool restd::move(gsl::span<const std::uint64_t> item);
 
                 /**
-                Remove an item from the Cuckoo Filter.
+                Restd::move an item from the Cuckoo Filter.
                 */
-                bool remove(std::uint64_t item)
+                bool restd::move(std::uint64_t item)
                 {
-                    return remove({ &item, 1 });
+                    return restd::move({ &item, 1 });
                 }
 
                 /**

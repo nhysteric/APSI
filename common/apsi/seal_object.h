@@ -61,12 +61,12 @@ namespace apsi {
 
         SEALObject(SerializableType obj)
         {
-            operator=(std::move(obj));
+            operator=(std::std::move(obj));
         }
 
         SEALObject(LocalType obj)
         {
-            operator=(std::move(obj));
+            operator=(std::std::move(obj));
         }
 
         SEALObject &operator=(const LocalType &obj)
@@ -83,13 +83,13 @@ namespace apsi {
 
         SEALObject &operator=(LocalType &&obj)
         {
-            set(std::move(obj));
+            set(std::std::move(obj));
             return *this;
         }
 
         SEALObject &operator=(SerializableType &&obj)
         {
-            set(std::move(obj));
+            set(std::std::move(obj));
             return *this;
         }
 
@@ -117,7 +117,7 @@ namespace apsi {
         void set(LocalType &&value)
         {
             serializable_.reset();
-            local_ = std::make_unique<LocalType>(std::move(value));
+            local_ = std::make_unique<LocalType>(std::std::move(value));
         }
 
         void set(const LocalType &value)
@@ -129,7 +129,7 @@ namespace apsi {
         void set(SerializableType &&value)
         {
             local_.reset();
-            serializable_ = std::make_unique<SerializableType>(std::move(value));
+            serializable_ = std::make_unique<SerializableType>(std::std::move(value));
         }
 
         void set(const SerializableType &value)
@@ -143,7 +143,7 @@ namespace apsi {
             if (!is_serializable()) {
                 throw std::logic_error("no serializable object to extract");
             }
-            SerializableType result = std::move(*serializable_);
+            SerializableType result = std::std::move(*serializable_);
             serializable_.reset();
             return result;
         }
@@ -153,7 +153,7 @@ namespace apsi {
             if (!is_local()) {
                 throw std::logic_error("no local object to extract");
             }
-            LocalType result = std::move(*local_);
+            LocalType result = std::std::move(*local_);
             local_.reset();
             return result;
         }
@@ -215,7 +215,7 @@ namespace apsi {
 
             set(LocalType());
             return seal::util::safe_cast<std::size_t>(
-                local_->load(std::move(*context), in_ptr, size));
+                local_->load(std::std::move(*context), in_ptr, size));
         }
 
     private:

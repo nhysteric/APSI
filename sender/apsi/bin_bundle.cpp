@@ -352,7 +352,7 @@ namespace apsi {
             CryptoContext context,
             uint32_t ps_low_degree,
             bool compressed)
-            : crypto_context(move(context))
+            : crypto_context(std::move(context))
         {
             compr_mode_type compr_mode = compressed ? compr_mode_type::zstd : compr_mode_type::none;
 
@@ -409,7 +409,7 @@ namespace apsi {
                 size_t size = static_cast<size_t>(pt.save(
                     reinterpret_cast<seal_byte *>(pt_data.data()), pt_data.size(), compr_mode));
                 pt_data.resize(size);
-                batched_coeffs.push_back(move(pt_data));
+                batched_coeffs.push_back(std::move(pt_data));
             }
         }
 
@@ -737,14 +737,14 @@ namespace apsi {
             return true;
         }
 
-        bool BinBundle::try_multi_remove(const vector<felt_t> &items, size_t start_bin_idx)
+        bool BinBundle::try_multi_restd::move(const vector<felt_t> &items, size_t start_bin_idx)
         {
             if (stripped_) {
-                APSI_LOG_ERROR("Cannot remove data from a stripped BinBundle");
-                throw logic_error("failed to remove data");
+                APSI_LOG_ERROR("Cannot restd::move data from a stripped BinBundle");
+                throw logic_error("failed to restd::move data");
             }
             if (items.empty()) {
-                APSI_LOG_ERROR("No item data to remove");
+                APSI_LOG_ERROR("No item data to restd::move");
                 return false;
             }
 
@@ -756,27 +756,27 @@ namespace apsi {
             // Go through all the items. If any item doesn't appear, we scrap the whole computation
             // and return false.
             size_t curr_bin_idx = start_bin_idx;
-            vector<vector<felt_t>::iterator> to_remove_item_its;
-            vector<vector<vector<felt_t>::iterator>> to_remove_label_its(get_label_size());
+            vector<vector<felt_t>::iterator> to_restd::move_item_its;
+            vector<vector<vector<felt_t>::iterator>> to_restd::move_label_its(get_label_size());
 
             for (auto &item : items) {
                 vector<felt_t> &curr_bin = item_bins_[curr_bin_idx];
                 CuckooFilter &curr_filter = filters_[curr_bin_idx];
 
-                auto to_remove_item_it = get_iterator(curr_bin, curr_filter, item);
-                if (curr_bin.end() == to_remove_item_it) {
+                auto to_restd::move_item_it = get_iterator(curr_bin, curr_filter, item);
+                if (curr_bin.end() == to_restd::move_item_it) {
                     // One of the items isn't there; return false;
                     return false;
                 } else {
                     // Found the item; mark it for removal
-                    to_remove_item_its.push_back(to_remove_item_it);
+                    to_restd::move_item_its.push_back(to_restd::move_item_it);
 
                     // We need to also mark the corresponding labels for removal
-                    auto item_loc_in_bin = distance(curr_bin.begin(), to_remove_item_it);
+                    auto item_loc_in_bin = distance(curr_bin.begin(), to_restd::move_item_it);
                     for (size_t label_idx = 0; label_idx < get_label_size(); label_idx++) {
-                        auto to_remove_label_it =
+                        auto to_restd::move_label_it =
                             label_bins_[label_idx][curr_bin_idx].begin() + item_loc_in_bin;
-                        to_remove_label_its[label_idx].push_back(to_remove_label_it);
+                        to_restd::move_label_its[label_idx].push_back(to_restd::move_label_it);
                     }
                 }
 
@@ -785,10 +785,10 @@ namespace apsi {
 
             // We got to this point, so all of the items were found. Now just erase them.
             curr_bin_idx = start_bin_idx;
-            for (auto to_remove_item_it : to_remove_item_its) {
-                // Remove the item
-                filters_[curr_bin_idx].remove(*to_remove_item_it);
-                item_bins_[curr_bin_idx].erase(to_remove_item_it);
+            for (auto to_restd::move_item_it : to_restd::move_item_its) {
+                // Restd::move the item
+                filters_[curr_bin_idx].restd::move(*to_restd::move_item_it);
+                item_bins_[curr_bin_idx].erase(to_restd::move_item_it);
 
                 // Indicate that the polynomials need to be recomputed
                 cache_invalid_ = true;
@@ -799,9 +799,9 @@ namespace apsi {
             // Finally erase the label parts
             for (size_t label_idx = 0; label_idx < get_label_size(); label_idx++) {
                 curr_bin_idx = start_bin_idx;
-                for (auto to_remove_label_it : to_remove_label_its[label_idx]) {
-                    // Remove the label
-                    label_bins_[label_idx][curr_bin_idx].erase(to_remove_label_it);
+                for (auto to_restd::move_label_it : to_restd::move_label_its[label_idx]) {
+                    // Restd::move the label
+                    label_bins_[label_idx][curr_bin_idx].erase(to_restd::move_label_it);
 
                     curr_bin_idx++;
                 }
@@ -934,7 +934,7 @@ namespace apsi {
                     crypto_context_,
                     static_cast<uint32_t>(ps_low_degree_),
                     compressed_);
-                cache_.batched_matching_polyn = move(bmp);
+                cache_.batched_matching_polyn = std::move(bmp);
             }));
 
             for (size_t label_idx = 0; label_idx < cache_.felt_interp_polyns.size(); label_idx++) {
@@ -946,7 +946,7 @@ namespace apsi {
                         crypto_context_,
                         static_cast<uint32_t>(ps_low_degree_),
                         compressed_);
-                    cache_.batched_interp_polyns[label_idx] = move(bip);
+                    cache_.batched_interp_polyns[label_idx] = std::move(bip);
                 }));
             }
 
@@ -982,7 +982,7 @@ namespace apsi {
                 futures.push_back(tpm.thread_pool().enqueue([&, bin_idx]() {
                     // Compute and cache the matching polynomial
                     FEltPolyn fmp = polyn_with_roots(item_bins_[bin_idx], mod);
-                    cache_.felt_matching_polyns[bin_idx] = move(fmp);
+                    cache_.felt_matching_polyns[bin_idx] = std::move(fmp);
                 }));
             }
 
@@ -993,7 +993,7 @@ namespace apsi {
                         // Compute and cache the matching polynomial
                         FEltPolyn fip = newton_interpolate_polyn(
                             item_bins_[bin_idx], label_bins_[label_idx][bin_idx], mod);
-                        cache_.felt_interp_polyns[label_idx][bin_idx] = move(fip);
+                        cache_.felt_interp_polyns[label_idx][bin_idx] = std::move(fip);
                     }));
                 }
             }
@@ -1168,8 +1168,8 @@ namespace apsi {
                 throw runtime_error("failed to load BinBundle");
             }
 
-            // Remove all data and clear the cache; reset data structures according to the stripped
-            // flag
+            // Restd::move all data and clear the cache; reset data structures according to the
+            // stripped flag
             clear(bb->stripped());
 
             // Check that the number of bins is correct
@@ -1313,7 +1313,7 @@ namespace apsi {
                     FEltPolyn p;
                     p.reserve(felt_matching_polyn.size());
                     copy(felt_matching_polyn.begin(), felt_matching_polyn.end(), back_inserter(p));
-                    cache_.felt_matching_polyns.push_back(move(p));
+                    cache_.felt_matching_polyns.push_back(std::move(p));
 
                     // Keep track of the largest coefficient count
                     max_coeff_count = max<size_t>(max_coeff_count, felt_matching_polyn.size());
@@ -1365,8 +1365,8 @@ namespace apsi {
                         batched_matching_polyn_coeff.size(),
                         pt_data.data());
 
-                    // Move the loaded data to the cache
-                    cache_.batched_matching_polyn.batched_coeffs.push_back(move(pt_data));
+                    // std::move the loaded data to the cache
+                    cache_.batched_matching_polyn.batched_coeffs.push_back(std::move(pt_data));
                 }
 
                 // We are now done with the item cache data; next check that the label cache size is
@@ -1453,7 +1453,7 @@ namespace apsi {
                         FEltPolyn p;
                         p.reserve(interp_polyn_coeff_count);
                         copy(felt_interp_polyn.begin(), felt_interp_polyn.end(), back_inserter(p));
-                        cache_.felt_interp_polyns[label_idx].push_back(move(p));
+                        cache_.felt_interp_polyns[label_idx].push_back(std::move(p));
                     }
 
                     // Finally check that the number of batched interpolation polynomial
@@ -1503,9 +1503,9 @@ namespace apsi {
                             batched_interp_polyn_coeff.size(),
                             pt_data.data());
 
-                        // Move the loaded data to the cache
+                        // std::move the loaded data to the cache
                         cache_.batched_interp_polyns[label_idx].batched_coeffs.push_back(
-                            move(pt_data));
+                            std::move(pt_data));
                     }
                 }
 

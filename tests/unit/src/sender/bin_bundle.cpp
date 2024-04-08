@@ -695,7 +695,7 @@ namespace APSITests {
         test_fun(get_params2(), 3);
     }
 
-    TEST(BinBundleTests, BinBundleTryMultiRemove)
+    TEST(BinBundleTests, BinBundleTryMultiRestd::move)
     {
         auto test_fun = [](shared_ptr<PSIParams> params) {
             CryptoContext context(*params);
@@ -719,18 +719,18 @@ namespace APSITests {
             bb.regen_cache();
             ASSERT_FALSE(bb.cache_invalid());
 
-            // Try remove invalid item
-            bool bres = bb.try_multi_remove({ 1, 3, 2 }, 0);
+            // Try restd::move invalid item
+            bool bres = bb.try_multi_restd::move({ 1, 3, 2 }, 0);
             ASSERT_FALSE(bres);
             ASSERT_FALSE(bb.cache_invalid());
 
-            // Try remove invalid item
-            bres = bb.try_multi_remove({ 1, 2, 3 }, 1);
+            // Try restd::move invalid item
+            bres = bb.try_multi_restd::move({ 1, 2, 3 }, 1);
             ASSERT_FALSE(bres);
             ASSERT_FALSE(bb.cache_invalid());
 
-            // Remove valid item
-            bres = bb.try_multi_remove({ 4, 5, 6 }, 0);
+            // Restd::move valid item
+            bres = bb.try_multi_restd::move({ 4, 5, 6 }, 0);
             ASSERT_TRUE(bres);
             ASSERT_FALSE(bb.empty());
 
@@ -738,8 +738,8 @@ namespace APSITests {
             bb.regen_cache();
             ASSERT_FALSE(bb.cache_invalid());
 
-            // Remove valid item
-            bres = bb.try_multi_remove({ 1, 2, 3, 7, 8 }, 0);
+            // Restd::move valid item
+            bres = bb.try_multi_restd::move({ 1, 2, 3, 7, 8 }, 0);
             ASSERT_TRUE(bres);
             ASSERT_TRUE(bb.cache_invalid());
             ASSERT_TRUE(bb.empty());

@@ -37,10 +37,10 @@ namespace APSITests {
 
         ASSERT_EQ(100, filter.get_num_items());
 
-        ASSERT_EQ(true, filter.remove(1));
-        ASSERT_EQ(true, filter.remove(10));
-        ASSERT_EQ(true, filter.remove(20));
-        ASSERT_EQ(true, filter.remove(80));
+        ASSERT_EQ(true, filter.restd::move(1));
+        ASSERT_EQ(true, filter.restd::move(10));
+        ASSERT_EQ(true, filter.restd::move(20));
+        ASSERT_EQ(true, filter.restd::move(80));
 
         ASSERT_EQ(false, filter.contains(1));
         ASSERT_EQ(true, filter.contains(2));
@@ -77,10 +77,10 @@ namespace APSITests {
 
         ASSERT_EQ(100, filter.get_num_items());
 
-        ASSERT_EQ(true, filter.remove(1));
-        ASSERT_EQ(true, filter.remove(10));
-        ASSERT_EQ(true, filter.remove(20));
-        ASSERT_EQ(true, filter.remove(80));
+        ASSERT_EQ(true, filter.restd::move(1));
+        ASSERT_EQ(true, filter.restd::move(10));
+        ASSERT_EQ(true, filter.restd::move(20));
+        ASSERT_EQ(true, filter.restd::move(80));
 
         ASSERT_EQ(false, filter.contains(1));
         ASSERT_EQ(true, filter.contains(2));
@@ -122,10 +122,10 @@ namespace APSITests {
 
         ASSERT_EQ(100, filter.get_num_items());
 
-        ASSERT_EQ(true, filter.remove(1));
-        ASSERT_EQ(true, filter.remove(10));
-        ASSERT_EQ(true, filter.remove(20));
-        ASSERT_EQ(true, filter.remove(80));
+        ASSERT_EQ(true, filter.restd::move(1));
+        ASSERT_EQ(true, filter.restd::move(10));
+        ASSERT_EQ(true, filter.restd::move(20));
+        ASSERT_EQ(true, filter.restd::move(80));
 
         ASSERT_EQ(false, filter.contains(1));
         ASSERT_EQ(true, filter.contains(2));

@@ -62,7 +62,7 @@ namespace apsi {
                 static constexpr std::size_t factor_size = ECPoint::order_size;
 
                 FactorData(seal::MemoryPoolHandle pool, std::size_t item_count = 0)
-                    : factor_data_(std::move(pool))
+                    : factor_data_(std::std::move(pool))
                 {
                     resize(item_count);
                 }

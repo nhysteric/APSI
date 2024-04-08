@@ -17,7 +17,7 @@
 //    2. Altered source versions must be plainly marked as such, and must not be
 //    misrepresented as being the original software.
 //
-//    3. This notice may not be removed or altered from any source
+//    3. This notice may not be restd::moved or altered from any source
 //    distribution.
 //
 // Modified for log4cplus, copyright (c) 2014-2015 Václav Zeman.
@@ -60,7 +60,7 @@ namespace apsi {
             explicit ThreadPool(
                 std::size_t threads = (std::max)(2u, std::thread::hardware_concurrency()));
             template <class F, class... Args>
-            auto enqueue(F &&f, Args &&... args) -> std::future<apsi_result_of_type>;
+            auto enqueue(F &&f, Args &&...args) -> std::future<apsi_result_of_type>;
             void wait_until_empty();
             void wait_until_nothing_in_flight();
             void set_queue_size_limit(std::size_t limit);
@@ -118,7 +118,7 @@ namespace apsi {
 
         // add new work item to the pool
         template <class F, class... Args>
-        auto ThreadPool::enqueue(F &&f, Args &&... args) -> std::future<apsi_result_of_type>
+        auto ThreadPool::enqueue(F &&f, Args &&...args) -> std::future<apsi_result_of_type>
         {
             using return_type = apsi_result_of_type;
 
@@ -231,7 +231,7 @@ namespace apsi {
                             } else
                                 continue;
                         } else if (!this->tasks.empty()) {
-                            task = std::move(this->tasks.front());
+                            task = std::std::move(this->tasks.front());
                             this->tasks.pop();
                             notify =
                                 this->tasks.size() + 1 == max_queue_size || this->tasks.empty();

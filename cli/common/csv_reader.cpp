@@ -45,11 +45,11 @@ auto CSVReader::read(istream &stream) const -> pair<DBData, vector<string>>
             return { UnlabeledData{}, {} };
         }
 
-        orig_items.push_back(move(orig_item));
+        orig_items.push_back(std::move(orig_item));
         if (has_label) {
-            result = LabeledData{ make_pair(move(item), move(label)) };
+            result = LabeledData{ make_pair(std::move(item), std::move(label)) };
         } else {
-            result = UnlabeledData{ move(item) };
+            result = UnlabeledData{ std::move(item) };
         }
     }
 
@@ -60,16 +60,16 @@ auto CSVReader::read(istream &stream) const -> pair<DBData, vector<string>>
         auto [has_item, _] = process_line(line, orig_item, item, label);
 
         if (!has_item) {
-            // Something went wrong; skip this item and move on to the next
+            // Something went wrong; skip this item and std::move on to the next
             APSI_LOG_WARNING("Failed to read item from `" << file_name_ << "`");
             continue;
         }
 
-        orig_items.push_back(move(orig_item));
+        orig_items.push_back(std::move(orig_item));
         if (holds_alternative<UnlabeledData>(result)) {
-            get<UnlabeledData>(result).push_back(move(item));
+            get<UnlabeledData>(result).push_back(std::move(item));
         } else if (holds_alternative<LabeledData>(result)) {
-            get<LabeledData>(result).push_back(make_pair(move(item), move(label)));
+            get<LabeledData>(result).push_back(make_pair(std::move(item), std::move(label)));
         } else {
             // Something is terribly wrong
             APSI_LOG_ERROR("Critical error reading data");
@@ -77,7 +77,7 @@ auto CSVReader::read(istream &stream) const -> pair<DBData, vector<string>>
         }
     }
 
-    return { move(result), move(orig_items) };
+    return { std::move(result), std::move(orig_items) };
 }
 
 auto CSVReader::read() const -> pair<DBData, vector<string>>

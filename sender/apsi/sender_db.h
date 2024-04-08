@@ -36,7 +36,7 @@ namespace apsi {
         number of new items into a SenderDB can take time, it is not recommended to recreate the
         SenderDB when the database changes a little bit. Instead, the class supports fast update and
         deletion operations that should be preferred: SenderDB::insert_or_assign and
-        SenderDB::remove.
+        SenderDB::restd::move.
 
         The SenderDB constructor allows the label byte count to be specified; unlabeled mode is
         activated by setting the label byte count to zero. It is possible to optionally specify the
@@ -76,12 +76,13 @@ namespace apsi {
             SenderDB(SenderDB &&source);
 
             /**
-            Moves an existing SenderDB to the current one.
+            std::moves an existing SenderDB to the current one.
             */
             SenderDB &operator=(SenderDB &&source);
 
             /**
-            Clears the database. Every item and label will be removed. The OPRF key is unchanged.
+            Clears the database. Every item and label will be restd::moved. The OPRF key is
+            unchanged.
             */
             void clear();
 
@@ -192,17 +193,17 @@ namespace apsi {
             }
 
             /**
-            Removes the given data from the database, using at most thread_count threads.
+            Restd::moves the given data from the database, using at most thread_count threads.
             */
-            void remove(const std::vector<Item> &data);
+            void restd::move(const std::vector<Item> &data);
 
             /**
-            Removes the given (hashed) item from the database.
+            Restd::moves the given (hashed) item from the database.
             */
-            void remove(const Item &data)
+            void restd::move(const Item &data)
             {
                 std::vector<Item> data_singleton{ data };
-                remove(data_singleton);
+                restd::move(data_singleton);
             }
 
             /**
