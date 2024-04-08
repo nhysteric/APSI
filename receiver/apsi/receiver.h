@@ -5,13 +5,9 @@
 
 // STD
 #include <atomic>
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <set>
-#include <stdexcept>
-#include <type_traits>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -191,12 +187,15 @@ namespace apsi {
             std::pair<Request, IndexTranslationTable> create_query(
                 const std::vector<HashedItem> &items);
 
+            std::pair<Request, IndexTranslationTable> create_query_ours(
+                const std::vector<HashedItem> &items);
+
             /**
-            Processes a ResultPart object and returns a vector of MatchRecords in the same order as
-            the original vector of OPRF hashed items used to create the query. The return value
-            includes matches only for those items whose results happened to be in this particular
-            result part. Thus, to determine whether there was a match with the sender's data, the
-            results for each received ResultPart must be checked.
+            Processes a ResultPart object and returns a vector of MatchRecords in the same order
+            as the original vector of OPRF hashed items used to create the query. The return
+            value includes matches only for those items whose results happened to be in this
+            particular result part. Thus, to determine whether there was a match with the
+            sender's data, the results for each received ResultPart must be checked.
             */
             std::vector<MatchRecord> process_result_part(
                 const std::vector<LabelKey> &label_keys,

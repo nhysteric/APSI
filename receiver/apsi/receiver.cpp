@@ -20,12 +20,8 @@
 
 // SEAL
 #include "seal/ciphertext.h"
-#include "seal/context.h"
-#include "seal/encryptionparams.h"
 #include "seal/keygenerator.h"
-#include "seal/plaintext.h"
 #include "seal/util/common.h"
-#include "seal/util/defines.h"
 
 using namespace std;
 using namespace seal;
@@ -352,6 +348,82 @@ namespace apsi {
 
             APSI_LOG_INFO("Finished creating encrypted query");
 
+            return { std::move(sop), itt };
+        }
+
+        pair<Request, IndexTranslationTable> Receiver::create_query_ours(
+            const vector<HashedItem> &items)
+        {
+            APSI_LOG_INFO("Creating encrypted query for " << items.size() << " items");
+            STOPWATCH(recv_stopwatch, "Receiver::create_query");
+            IndexTranslationTable itt;
+            itt.item_count_ = items.size();
+
+            KukuTable cuckoo(
+                params_.table_params().table_size,      // Size of the hash table
+                0,                                      // Not using a stash
+                params_.table_params().hash_func_count, // Number of hash functions
+                { 0, 0 },                               // Hardcoded { 0, 0 } as the seed
+                cuckoo_table_insert_attempts,           // The number of insertion attempts
+                { 0, 0 });
+
+            {
+                STOPWATCH(recv_stopwatch, "Receiver::create_query::cuckoo_hashing");
+                APSI_LOG_DEBUG(
+                    "Inserting " << items.size() << " items into cuckoo table of size "
+                                 << cuckoo.table_size() << " with " << cuckoo.loc_func_count()
+                                 << " hash functions");
+                for (size_t item_idx = 0; item_idx < items.size(); item_idx++) {
+                    const auto &item = items[item_idx];
+                    if (!cuckoo.insert(item.get_as<kuku::item_type>().front())) {
+                        if (cuckoo.is_empty_item(cuckoo.leftover_item())) {
+                            APSI_LOG_INFO(
+                                "Skipping repeated insertion of items["
+                                << item_idx << "]: " << item.to_string());
+                        } else {
+                            APSI_LOG_ERROR(
+                                "Failed to insert items["
+                                << item_idx << "]: " << item.to_string()
+                                << "; cuckoo table fill-rate: " << cuckoo.fill_rate());
+                            throw runtime_error("failed to insert item into cuckoo table");
+                        }
+                    }
+                }
+                APSI_LOG_DEBUG(
+                    "Finished inserting items with "
+                    << cuckoo.loc_func_count()
+                    << " hash functions; cuckoo table fill-rate: " << cuckoo.fill_rate());
+            }
+            // 修改传输的数据，现在默认接收方会发送所有的幂值，所以map的key改为布谷鸟哈希表的下标，value为item的所有值。
+            unordered_map<uint32_t, std::vector<SEALObject<seal::Ciphertext>>> allPowers;
+            vector<PlaintextPowers> plain_powers;
+            for (size_t item_idx = 0; item_idx < items.size(); item_idx++) {
+                auto item_loc = cuckoo.query(items[item_idx].get_as<kuku::item_type>().front());
+                itt.table_idx_to_item_idx_[item_loc.location()] = item_idx;
+                auto &item = cuckoo.table().data()[item_loc.location()];
+                // Now set up a BitstringView to this item
+                gsl::span<const unsigned char> item_bytes(
+                    reinterpret_cast<const unsigned char *>(item.data()), sizeof(item));
+                BitstringView<const unsigned char> item_bits(item_bytes, params_.item_bit_count());
+                vector<uint64_t> alg_item =
+                    bits_to_field_elts(item_bits, params_.seal_params().plain_modulus());
+                plain_powers.emplace_back(std::move(alg_item), params_, pd_);
+
+                auto encrypted_power(plain_powers[item_idx].encrypt(crypto_context_));
+
+                // std::move the encrypted data to encrypted_powers
+                for (auto &e : encrypted_power) {
+                    allPowers[item_loc.location()].emplace_back(std::move(e.second));
+                }
+            }
+
+            auto sop_query = make_unique<SenderOperationQuery>();
+            sop_query->compr_mode = Serialization::compr_mode_default;
+            sop_query->relin_keys = relin_keys_;
+            sop_query->data = std::move(allPowers);
+            auto sop = to_request(std::move(sop_query));
+
+            APSI_LOG_INFO("Finished creating encrypted query");
             return { std::move(sop), itt };
         }
 
