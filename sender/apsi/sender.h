@@ -51,8 +51,8 @@ namespace apsi {
         constructor (see below) expects it to be passed as a std::shared_ptr<SenderDB>.
 
         (2) The sender's data must be loaded into the SenderDB with SenderDB::set_data. More data
-        can always be added later with SenderDB::insert_or_assign, or restd::moved with
-        SenderDB::restd::move, as long as the SenderDB has not been stripped (see SenderDB::strip).
+        can always be added later with SenderDB::insert_or_assign, or removed with
+        SenderDB::remove, as long as the SenderDB has not been stripped (see SenderDB::strip).
 
         (3 -- optional) Receive a parameter request with network::Channel::receive_operation. The
         received Request object must be converted to the right type (ParamsRequest) with the
@@ -92,7 +92,7 @@ namespace apsi {
             template <typename T>
             static void BasicSend(network::Channel &chl, std::unique_ptr<T> pkg)
             {
-                chl.send(std::std::move(pkg));
+                chl.send(std::move(pkg));
             }
 
         public:

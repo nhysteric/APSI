@@ -392,26 +392,26 @@ namespace apsi {
             }
 
             /**
-            Restd::moves the given items and corresponding labels from bin_bundles at their
+            Removes the given items and corresponding labels from bin_bundles at their
             respective cuckoo indices.
             */
-            void restd::move_worker(
+            void remove_worker(
                 const vector<pair<AlgItem, size_t>> &data_with_indices,
                 vector<vector<BinBundle>> &bin_bundles,
                 uint32_t bundle_index,
                 uint32_t bins_per_bundle)
             {
-                STOPWATCH(sender_stopwatch, "restd::move_worker");
-                APSI_LOG_INFO("Restd::move worker [" << bundle_index << "]");
+                STOPWATCH(sender_stopwatch, "remove_worker");
+                APSI_LOG_INFO("Remove worker [" << bundle_index << "]");
 
-                // Iteratively restd::move each item-label pair at the given cuckoo index
+                // Iteratively remove each item-label pair at the given cuckoo index
                 for (auto &data_with_idx : data_with_indices) {
                     // Get the bundle index
                     size_t cuckoo_idx = data_with_idx.second;
                     size_t bin_idx, bundle_idx;
                     tie(bin_idx, bundle_idx) = unpack_cuckoo_idx(cuckoo_idx, bins_per_bundle);
 
-                    // If the bundle_idx isn't in the prescribed range, don't try to restd::move
+                    // If the bundle_idx isn't in the prescribed range, don't try to remove
                     // this data
                     if (bundle_idx != bundle_index) {
                         // Dealing with this bundle index is not our job
@@ -421,45 +421,43 @@ namespace apsi {
                     // Get the bundle set at the given bundle index
                     vector<BinBundle> &bundle_set = bin_bundles[bundle_idx];
 
-                    // Try to restd::move these field elements from an existing BinBundle at this
+                    // Try to remove these field elements from an existing BinBundle at this
                     // bundle index. Keep track of whether or not we succeed.
-                    bool restd::moved = false;
+                    bool removed = false;
                     for (BinBundle &bundle : bundle_set) {
-                        // If we successfully restd::moved, we're done with this bundle
-                        restd::moved = bundle.try_multi_restd::move(data_with_idx.first, bin_idx);
-                        if (restd::moved) {
+                        // If we successfully removed, we're done with this bundle
+                        removed = bundle.try_multi_remove(data_with_idx.first, bin_idx);
+                        if (removed) {
                             break;
                         }
                     }
 
-                    // We may have produced some empty BinBundles so just restd::move them all
-                    auto rem_it =
-                        restd::move_if(bundle_set.begin(), bundle_set.end(), [](auto &bundle) {
-                            return bundle.empty();
-                        });
+                    // We may have produced some empty BinBundles so just remove them all
+                    auto rem_it = remove_if(bundle_set.begin(), bundle_set.end(), [](auto &bundle) {
+                        return bundle.empty();
+                    });
                     bundle_set.erase(rem_it, bundle_set.end());
 
-                    // We tried to restd::move an item that doesn't exist. This should never happen
-                    if (!restd::moved) {
+                    // We tried to remove an item that doesn't exist. This should never happen
+                    if (!removed) {
                         APSI_LOG_ERROR(
-                            "Restd::move worker: "
-                            "failed to restd::move item at bundle index "
+                            "Remove worker: "
+                            "failed to remove item at bundle index "
                             << bundle_idx
                             << " "
                                "because the item was not found");
-                        throw logic_error("failed to restd::move item");
+                        throw logic_error("failed to remove item");
                     }
                 }
 
-                APSI_LOG_INFO(
-                    "Restd::move worker: finished processing bundle index " << bundle_index);
+                APSI_LOG_INFO("Remove worker: finished processing bundle index " << bundle_index);
             }
 
             /**
-            Takes algebraized data to be restd::moved, splits it up, and distributes it so that
-            thread_count many threads can all restd::move in parallel.
+            Takes algebraized data to be removed, splits it up, and distributes it so that
+            thread_count many threads can all remove in parallel.
             */
-            void dispatch_restd::move(
+            void dispatch_remove(
                 const vector<pair<AlgItem, size_t>> &data_with_indices,
                 vector<vector<BinBundle>> &bin_bundles,
                 uint32_t bins_per_bundle)
@@ -467,7 +465,7 @@ namespace apsi {
                 ThreadPoolMgr tpm;
 
                 // Collect the bundle indices and partition them into thread_count many partitions.
-                // By some uniformity assumption, the number of things to restd::move per partition
+                // By some uniformity assumption, the number of things to remove per partition
                 // should be roughly the same. Note that the contents of bundle_indices is always
                 // sorted (increasing order).
                 set<size_t> bundle_indices_set;
@@ -490,11 +488,11 @@ namespace apsi {
 
                 // Run the threads on the partitions
                 vector<future<void>> futures(bundle_indices.size());
-                APSI_LOG_INFO("Launching " << bundle_indices.size() << " restd::move worker tasks");
+                APSI_LOG_INFO("Launching " << bundle_indices.size() << " remove worker tasks");
                 size_t future_idx = 0;
                 for (auto &bundle_idx : bundle_indices) {
                     futures[future_idx++] = tpm.thread_pool().enqueue([&]() {
-                        restd::move_worker(
+                        remove_worker(
                             data_with_indices,
                             bin_bundles,
                             static_cast<uint32_t>(bundle_idx),
@@ -774,8 +772,8 @@ namespace apsi {
             // We need to know which items are new and which are old, since we have to tell
             // dispatch_insert_or_assign when to have an overwrite-on-collision versus
             // add-binbundle-on-collision policy.
-            auto new_data_end = restd::move_if(
-                hashed_data.begin(), hashed_data.end(), [&](const auto &item_label_pair) {
+            auto new_data_end =
+                remove_if(hashed_data.begin(), hashed_data.end(), [&](const auto &item_label_pair) {
                     bool found = hashed_items_.find(item_label_pair.first) != hashed_items_.end();
                     if (!found) {
                         // Add to hashed_items_ already at this point!
@@ -783,7 +781,7 @@ namespace apsi {
                         item_count_++;
                     }
 
-                    // Restd::move those that were found
+                    // Remove those that were found
                     return found;
                 });
 
@@ -871,7 +869,7 @@ namespace apsi {
 
             // We are not going to insert items that already appear in the database.
             auto new_data_end =
-                restd::move_if(hashed_data.begin(), hashed_data.end(), [&](const auto &item) {
+                remove_if(hashed_data.begin(), hashed_data.end(), [&](const auto &item) {
                     bool found = hashed_items_.find(item) != hashed_items_.end();
                     if (!found) {
                         // Add to hashed_items_ already at this point!
@@ -879,7 +877,7 @@ namespace apsi {
                         item_count_++;
                     }
 
-                    // Restd::move those that were found
+                    // Remove those that were found
                     return found;
                 });
 
@@ -916,14 +914,14 @@ namespace apsi {
             APSI_LOG_INFO("Finished inserting " << data.size() << " items in SenderDB");
         }
 
-        void SenderDB::restd::move(const vector<Item> &data)
+        void SenderDB::remove(const vector<Item> &data)
         {
             if (stripped_) {
-                APSI_LOG_ERROR("Cannot restd::move data from a stripped SenderDB");
-                throw logic_error("failed to restd::move data");
+                APSI_LOG_ERROR("Cannot remove data from a stripped SenderDB");
+                throw logic_error("failed to remove data");
             }
 
-            STOPWATCH(sender_stopwatch, "SenderDB::restd::move");
+            STOPWATCH(sender_stopwatch, "SenderDB::remove");
             APSI_LOG_INFO("Start removing " << data.size() << " items from SenderDB");
 
             // First compute the hashes for the input data
@@ -932,17 +930,17 @@ namespace apsi {
             // Lock the database for writing
             auto lock = get_writer_lock();
 
-            // Restd::move items that do not exist in the database.
+            // Remove items that do not exist in the database.
             auto existing_data_end =
-                restd::move_if(hashed_data.begin(), hashed_data.end(), [&](const auto &item) {
+                remove_if(hashed_data.begin(), hashed_data.end(), [&](const auto &item) {
                     bool found = hashed_items_.find(item) != hashed_items_.end();
                     if (found) {
-                        // Restd::move from hashed_items_ already at this point!
+                        // Remove from hashed_items_ already at this point!
                         hashed_items_.erase(item);
                         item_count_--;
                     }
 
-                    // Restd::move those that were not found
+                    // Remove those that were not found
                     return !found;
                 });
 
@@ -962,7 +960,7 @@ namespace apsi {
 
             // Dispatch the removal
             uint32_t bins_per_bundle = params_.bins_per_bundle();
-            dispatch_restd::move(data_with_indices, bin_bundles_, bins_per_bundle);
+            dispatch_remove(data_with_indices, bin_bundles_, bins_per_bundle);
 
             // Generate the BinBundle caches
             generate_caches();

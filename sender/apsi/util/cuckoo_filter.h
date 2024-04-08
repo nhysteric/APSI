@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <vector>
 
 // APSI
 #include "apsi/util/cuckoo_filter_table.h"
@@ -59,16 +58,16 @@ namespace apsi {
                 }
 
                 /**
-                Restd::move an item from the Cuckoo Filter.
+                Remove an item from the Cuckoo Filter.
                 */
-                bool restd::move(gsl::span<const std::uint64_t> item);
+                bool remove(gsl::span<const std::uint64_t> item);
 
                 /**
-                Restd::move an item from the Cuckoo Filter.
+                Remove an item from the Cuckoo Filter.
                 */
-                bool restd::move(std::uint64_t item)
+                bool remove(std::uint64_t item)
                 {
-                    return restd::move({ &item, 1 });
+                    return remove({ &item, 1 });
                 }
 
                 /**

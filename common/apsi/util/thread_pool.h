@@ -17,7 +17,7 @@
 //    2. Altered source versions must be plainly marked as such, and must not be
 //    misrepresented as being the original software.
 //
-//    3. This notice may not be restd::moved or altered from any source
+//    3. This notice may not be removed or altered from any source
 //    distribution.
 //
 // Modified for log4cplus, copyright (c) 2014-2015 Václav Zeman.
@@ -231,7 +231,7 @@ namespace apsi {
                             } else
                                 continue;
                         } else if (!this->tasks.empty()) {
-                            task = std::std::move(this->tasks.front());
+                            task = std::move(this->tasks.front());
                             this->tasks.pop();
                             notify =
                                 this->tasks.size() + 1 == max_queue_size || this->tasks.empty();

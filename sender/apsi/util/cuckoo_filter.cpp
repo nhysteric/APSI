@@ -107,7 +107,7 @@ bool CuckooFilter::add_index_tag(size_t idx, uint64_t tag)
     return true;
 }
 
-bool CuckooFilter::restd::move(gsl::span<const uint64_t> item)
+bool CuckooFilter::remove(gsl::span<const uint64_t> item)
 {
     size_t idx1, idx2;
     uint64_t tag;

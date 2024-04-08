@@ -36,7 +36,7 @@ namespace apsi {
             /**
             Creates a LabelData object holding a given bit string.
             */
-            LabelData(Label label) : label_(std::std::move(label))
+            LabelData(Label label) : label_(std::move(label))
             {}
 
             /**
@@ -44,7 +44,7 @@ namespace apsi {
             */
             void set(Label label)
             {
-                label_ = std::std::move(label);
+                label_ = std::move(label);
             }
 
             /**

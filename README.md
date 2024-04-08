@@ -596,7 +596,7 @@ Create a `SenderDB` object from the `PSIParams`. The `SenderDB` constructor opti
 It is recommended to construct the `SenderDB` directly into a `std::shared_ptr`, as the `Query` constructor (see below) expects it to be passed as a `std::shared_ptr<SenderDB>`.
 
 1. The sender's data must be loaded into the `SenderDB` with `SenderDB::set_data`.
-More data can always be added later with `SenderDB::insert_or_assign`, or restd::moved with `SenderDB::restd::move`, as long as the `SenderDB` has not been stripped (see `SenderDB::strip`).
+More data can always be added later with `SenderDB::insert_or_assign`, or removed with `SenderDB::remove`, as long as the `SenderDB` has not been stripped (see `SenderDB::strip`).
 
 1. (optional) Receive a parameter request with `network::Channel::receive_operation`.
 The received `Request` object must be converted to the right type (`ParamsRequest`) with the `to_params_request` function.
@@ -624,7 +624,7 @@ This same text appears in the [sender_db.h](sender/apsi/sender_db.h) header file
 A `SenderDB` maintains an in-memory representation of the sender's set of items and labels (in labeled mode).
 These items are not simply copied into the `SenderDB` data structures, but also preprocessed heavily to allow for faster online computation time.
 Since inserting a large number of new items into a `SenderDB` can take time, it is not recommended to recreate the `SenderDB` when the database changes a little bit.
-Instead, the class supports fast update and deletion operations that should be preferred: `SenderDB::insert_or_assign` and `SenderDB::restd::move`.
+Instead, the class supports fast update and deletion operations that should be preferred: `SenderDB::insert_or_assign` and `SenderDB::remove`.
 
 The `SenderDB` constructor allows the label byte count to be specified; unlabeled mode is activated by setting the label byte count to zero.
 It is possible to optionally specify the size of the nonce used in encrypting the labels, but this is best left to its default value unless the user is absolutely sure of what they are doing.
@@ -634,7 +634,7 @@ Part of that memory can automatically be compressed when it is not in use; this 
 The downside of in-memory compression is a performance reduction from decompressing parts of the data when they are used, and recompressing them if they are updated.
 
 In many cases the `SenderDB` does not need to be modified after having been constructed, or loaded from disk.
-The function `SenderDB::strip` can be called to restd::move all data that is not strictly needed to serve query requests.
+The function `SenderDB::strip` can be called to remove all data that is not strictly needed to serve query requests.
 A `SenderDB` that has been stripped cannot be modified, cannot be checked for the presence of specific items, and labels cannot be retrieved from it.
 A stripped `SenderDB` can be serialized and deserialized.
 

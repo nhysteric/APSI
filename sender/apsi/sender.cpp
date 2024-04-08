@@ -3,7 +3,6 @@
 
 // STD
 #include <future>
-#include <sstream>
 
 // APSI
 #include "apsi/crypto_context.h"
@@ -18,8 +17,6 @@
 #include "apsi/util/utils.h"
 
 // SEAL
-#include "seal/evaluator.h"
-#include "seal/modulus.h"
 #include "seal/util/common.h"
 
 using namespace std;
