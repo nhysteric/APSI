@@ -4,20 +4,17 @@
 // STD
 #include <csignal>
 #include <fstream>
-#include <functional>
 #include <iostream>
 #include <string>
 #if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__clang__)
 #include <experimental/filesystem>
 #else
-#include <filesystem>
 #endif
 
 // APSI
 #include "apsi/log.h"
 #include "apsi/oprf/oprf_sender.h"
 #include "apsi/thread_pool_mgr.h"
-#include "apsi/version.h"
 #include "apsi/zmq/sender_dispatcher.h"
 #include "common/common_utils.h"
 #include "common/csv_reader.h"
@@ -28,7 +25,6 @@ using namespace std;
 #if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__clang__)
 namespace fs = std::experimental::filesystem;
 #else
-namespace fs = std::filesystem;
 #endif
 using namespace apsi;
 using namespace apsi::sender;

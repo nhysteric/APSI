@@ -3,18 +3,14 @@
 
 #pragma once
 
-// STD
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-// GSL
-#include "gsl/span"
 
 // APSI
 #include "apsi/bin_bundle.h"
@@ -22,9 +18,6 @@
 #include "apsi/item.h"
 #include "apsi/oprf/oprf_sender.h"
 #include "apsi/psi_params.h"
-
-// SEAL
-#include "seal/plaintext.h"
 #include "seal/util/locks.h"
 
 namespace apsi {
@@ -172,6 +165,8 @@ namespace apsi {
                 insert_or_assign(data_singleton);
             }
 
+            void insert_ours(const std::vector<Item> &data);
+
             /**
             Clears the database and inserts the given data. This function can be used only on a
             labeled SenderDB instance.
@@ -189,7 +184,7 @@ namespace apsi {
             void set_data(const std::vector<Item> &data)
             {
                 clear();
-                insert_or_assign(data);
+                insert_ours(data);
             }
 
             /**
@@ -315,6 +310,8 @@ namespace apsi {
             The set of all items that have been inserted into the database
             */
             std::unordered_set<HashedItem> hashed_items_;
+
+            std::unordered_map<uint32_t, FEltPolyn> poly_ours;
 
             /**
             The PSI parameters define the SEAL parameters, base field, item size, table size, etc.

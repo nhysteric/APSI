@@ -105,6 +105,52 @@ namespace apsi {
             APSI_LOG_INFO("Finished processing OPRF request");
         }
 
+        void Sender::RunQuery_Ours(
+            const Query &query,
+            network::Channel &chl,
+            function<void(Channel &, Response)> send_fun,
+            function<void(Channel &, ResultPart)> send_rp_fun)
+        {
+            if (!query) {
+                APSI_LOG_ERROR("Failed to process query request: query is invalid");
+                throw invalid_argument("query is invalid");
+            }
+
+            // We use a custom SEAL memory that is freed after the query is done
+            auto pool = MemoryManager::GetPool(mm_force_new);
+
+            ThreadPoolMgr tpm;
+
+            // Acquire read lock on SenderDB
+            auto sender_db = query.sender_db();
+            auto sender_db_lock = sender_db->get_reader_lock();
+
+            STOPWATCH(sender_stopwatch, "Sender::RunQuery");
+            APSI_LOG_INFO(
+                "Start processing query request on database with " << sender_db->get_item_count()
+                                                                   << " items");
+
+            // Copy over the CryptoContext from SenderDB; set the Evaluator for this local instance.
+            // Relinearization keys may not have been included in the query. In that case
+            // query.relin_keys() simply holds an empty seal::RelinKeys instance. There is no
+            // problem with the below call to CryptoContext::set_evaluator.
+            CryptoContext crypto_context(sender_db->get_crypto_context());
+            crypto_context.set_evaluator(query.relin_keys());
+
+            PSIParams params(sender_db->get_params());
+            QueryResponse response_query = make_unique<QueryResponse::element_type>();
+            response_query->package_count = 1;
+
+            try {
+                send_fun(chl, std::move(response_query));
+            } catch (const exception &ex) {
+                APSI_LOG_ERROR(
+                    "Failed to send response to query request; function threw an exception: "
+                    << ex.what());
+                throw;
+            }
+        }
+
         void Sender::RunQuery(
             const Query &query,
             Channel &chl,

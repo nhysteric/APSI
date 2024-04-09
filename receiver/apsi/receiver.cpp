@@ -401,16 +401,12 @@ namespace apsi {
                 auto item_loc = cuckoo.query(items[item_idx].get_as<kuku::item_type>().front());
                 itt.table_idx_to_item_idx_[item_loc.location()] = item_idx;
                 auto &item = cuckoo.table().data()[item_loc.location()];
-                // Now set up a BitstringView to this item
-                gsl::span<const unsigned char> item_bytes(
-                    reinterpret_cast<const unsigned char *>(item.data()), sizeof(item));
-                BitstringView<const unsigned char> item_bits(item_bytes, params_.item_bit_count());
-                vector<uint64_t> alg_item =
-                    bits_to_field_elts(item_bits, params_.seal_params().plain_modulus());
-                plain_powers.emplace_back(std::move(alg_item), params_, pd_);
-
+                uint64_t truncate_item = 0;
+                for (int i = 0; i < 8; ++i) {
+                    truncate_item |= static_cast<uint64_t>(item[i]) << (8 * i);
+                }
+                plain_powers.emplace_back(std::move(truncate_item), params_, pd_);
                 auto encrypted_power(plain_powers[item_idx].encrypt(crypto_context_));
-
                 // std::move the encrypted data to encrypted_powers
                 for (auto &e : encrypted_power) {
                     allPowers[item_loc.location()].emplace_back(std::move(e.second));

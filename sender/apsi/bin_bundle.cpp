@@ -4,6 +4,7 @@
 // STD
 #include <algorithm>
 #include <future>
+#include <seal/serialization.h>
 #include <utility>
 
 // APSI
@@ -408,6 +409,16 @@ namespace apsi {
                     reinterpret_cast<seal_byte *>(pt_data.data()), pt_data.size(), compr_mode));
                 pt_data.resize(size);
                 batched_coeffs.push_back(std::move(pt_data));
+            }
+        }
+
+        BatchedPlaintextPolyn::BatchedPlaintextPolyn(
+            const vector<FEltPolyn> &polyns, CryptoContext context)
+            : crypto_context(std::move(context))
+        {
+            compr_mode_type compr_mode=compr_mode_type::none;
+            for(const auto &p : polyns){
+                
             }
         }
 

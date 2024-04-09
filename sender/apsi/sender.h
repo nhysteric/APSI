@@ -129,17 +129,25 @@ namespace apsi {
                 std::function<void(network::Channel &, ResultPart)> send_rp_fun =
                     BasicSend<ResultPart::element_type>);
 
-        private:
-            /**
-            Method that handles computing powers for a given bundle index
-            */
-            static void ComputePowers(
-                const std::shared_ptr<SenderDB> &sender_db,
-                const CryptoContext &crypto_context,
-                std::vector<std::vector<seal::Ciphertext>> &powers,
-                const PowersDag &pd,
-                std::uint32_t bundle_idx,
-                seal::MemoryPoolHandle &pool);
+            static void RunQuery_Ours(
+                const Query &query,
+                network::Channel &chl,
+                std::function<void(network::Channel &, Response)> send_fun =
+                    BasicSend<Response::element_type>,
+                std::function<void(network::Channel &, ResultPart)> send_rp_fun =
+                    BasicSend<ResultPart::element_type>);
+
+                private :
+                /**
+                Method that handles computing powers for a given bundle index
+                */
+                static void ComputePowers(
+                    const std::shared_ptr<SenderDB> &sender_db,
+                    const CryptoContext &crypto_context,
+                    std::vector<std::vector<seal::Ciphertext>> &powers,
+                    const PowersDag &pd,
+                    std::uint32_t bundle_idx,
+                    seal::MemoryPoolHandle &pool);
 
             /**
             Method that processes a single Bin Bundle cache.

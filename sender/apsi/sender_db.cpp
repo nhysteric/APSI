@@ -3,18 +3,23 @@
 
 // STD
 #include <algorithm>
+#include <cstdint>
 #include <future>
 #include <iterator>
 #include <memory>
 #include <mutex>
 #include <sstream>
+#include <unordered_map>
+#include <vector>
 
 // APSI
+#include "apsi/item.h"
 #include "apsi/psi_params.h"
 #include "apsi/sender_db.h"
 #include "apsi/sender_db_generated.h"
 #include "apsi/thread_pool_mgr.h"
 #include "apsi/util/db_encoding.h"
+#include "apsi/util/interpolate.h"
 #include "apsi/util/label_encryptor.h"
 #include "apsi/util/utils.h"
 
@@ -190,9 +195,50 @@ namespace apsi {
                 return data_with_indices;
             }
 
+            unordered_map<uint32_t, vector<uint64_t>> preprocess_unlabeled_data_ours(
+                const vector<HashedItem>::const_iterator begin,
+                const vector<HashedItem>::const_iterator end,
+                const PSIParams &params)
+            {
+                STOPWATCH(sender_stopwatch, "preprocess_unlabeled_data");
+                APSI_LOG_DEBUG(
+                    "Start preprocessing " << distance(begin, end) << " unlabeled items");
+
+                // Some variables we'll need
+                size_t bins_per_item = params.item_params().felts_per_item;
+                size_t item_bit_count = params.item_bit_count();
+
+                // Set up Kuku hash functions
+                auto hash_funcs = hash_functions(params);
+
+                unordered_map<uint32_t, vector<uint64_t>> data_with_indices;
+                for (auto it = begin; it != end; it++) {
+                    const HashedItem &item = *it;
+                    uint64_t truncate_item = 0;
+                    for (int i = 0; i < 8; ++i) {
+                        truncate_item |= static_cast<uint64_t>(item.value()[i]) << (8 * i);
+                    }
+                    // Get the cuckoo table locations for this item and add to data_with_indices
+                    for (auto location : all_locations(hash_funcs, item)) {
+                        // The current hash value is an index into a table of Items. In reality our
+                        // BinBundles are tables of bins, which contain chunks of items. How many
+                        // chunks? bins_per_item many chunks
+                        // size_t bin_idx = location * bins_per_item;
+
+                        // Store the data along with its index
+                        data_with_indices[location].emplace_back(truncate_item);
+                    }
+                }
+
+                APSI_LOG_DEBUG(
+                    "Finished preprocessing " << distance(begin, end) << " unlabeled items");
+
+                return data_with_indices;
+            }
+
             /**
-            Converts given Item into its algebraic form, i.e., a sequence of felt-monostate pairs.
-            Also computes the Item's cuckoo index.
+            Converts given Item into its algebraic form, i.e., a sequence of felt-monostate
+            pairs. Also computes the Item's cuckoo index.
             */
             vector<pair<AlgItem, size_t>> preprocess_unlabeled_data(
                 const HashedItem &item, const PSIParams &params)
@@ -672,7 +718,7 @@ namespace apsi {
             // Clear the BinBundles
             bin_bundles_.clear();
             bin_bundles_.resize(params_.bundle_idx_count());
-
+            poly_ours.clear();
             // Reset the stripped_ flag
             stripped_ = false;
         }
@@ -912,6 +958,39 @@ namespace apsi {
             generate_caches();
 
             APSI_LOG_INFO("Finished inserting " << data.size() << " items in SenderDB");
+        }
+
+        void SenderDB::insert_ours(const vector<Item> &data)
+        {
+            if (stripped_) {
+                APSI_LOG_ERROR("Cannot insert data to a stripped SenderDB");
+                throw logic_error("failed to insert data");
+            }
+            if (is_labeled()) {
+                APSI_LOG_ERROR("Attempted to insert unlabeled data but this is a labeled SenderDB");
+                throw logic_error("failed to insert data");
+            }
+
+            STOPWATCH(sender_stopwatch, "SenderDB::insert_or_assign (unlabeled)");
+            APSI_LOG_INFO("Start inserting " << data.size() << " items in SenderDB (Ours)");
+
+            // First compute the hashes for the input data
+            auto hashed_data = OPRFSender::ComputeHashes(data, oprf_key_);
+
+            // Lock the database for writing
+            auto lock = get_writer_lock();
+
+            // Break the new data down into its field element representation. Also compute the
+            // items' cuckoo indices.
+            auto data_with_indices =
+                preprocess_unlabeled_data_ours(hashed_data.begin(), hashed_data.end(), params_);
+
+            for (auto const &p : data_with_indices) {
+                const auto &mod =
+                    crypto_context_.seal_context()->first_context_data()->parms().plain_modulus();
+                auto fmp = polyn_with_roots(p.second, mod);
+                poly_ours[p.first] = std::move(fmp);
+            }
         }
 
         void SenderDB::remove(const vector<Item> &data)

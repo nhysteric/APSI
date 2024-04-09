@@ -79,6 +79,8 @@ namespace apsi {
                 std::uint32_t ps_low_degree,
                 bool compressed);
 
+            BatchedPlaintextPolyn(const std::vector<FEltPolyn> &polyns, CryptoContext context);
+
             /**
             Constructs an uninitialized Plaintext polynomial using the given crypto context
             */
