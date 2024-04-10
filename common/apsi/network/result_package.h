@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 // SEAL
@@ -58,6 +59,8 @@ namespace apsi {
             seal::compr_mode_type compr_mode = seal::Serialization::compr_mode_default;
 
             SEALObject<seal::Ciphertext> psi_result;
+
+            std::unordered_map<uint32_t, SEALObject<seal::Ciphertext>> psi_result_ours;
 
             std::uint32_t label_byte_count;
 

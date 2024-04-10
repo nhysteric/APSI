@@ -184,6 +184,7 @@ namespace apsi {
             void set_data(const std::vector<Item> &data)
             {
                 clear();
+                // insert_or_assign(data);
                 insert_ours(data);
             }
 
@@ -293,6 +294,11 @@ namespace apsi {
             Reads the SenderDB from a stream.
             */
             static std::pair<SenderDB, std::size_t> Load(std::istream &in);
+
+            std::unordered_map<uint32_t, FEltPolyn> get_poly_ours() const
+            {
+                return poly_ours;
+            }
 
         private:
             SenderDB(const SenderDB &copy) = delete;

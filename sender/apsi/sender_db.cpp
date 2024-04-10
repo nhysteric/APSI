@@ -227,6 +227,12 @@ namespace apsi {
 
                         // Store the data along with its index
                         data_with_indices[location].emplace_back(truncate_item);
+                        if (data_with_indices[location].size() >
+                            params.table_params().max_items_per_bin) {
+                            APSI_LOG_ERROR(
+                                "Item in bin" << location << " exceeds max_items_per_bin\nAbrot");
+                            throw;
+                        }
                     }
                 }
 

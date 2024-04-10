@@ -86,7 +86,7 @@ namespace apsi {
                 return;
             }
             APSI_LOG_DEBUG("Configured PowersDag with depth " << pd_.depth());
-
+            /*
             // Check that the query data size matches the PSIParams
             if (data_.size() != query_powers.size()) {
                 APSI_LOG_ERROR(
@@ -122,6 +122,7 @@ namespace apsi {
                     return;
                 }
             }
+            */
 
             // The query is valid
             valid_ = true;

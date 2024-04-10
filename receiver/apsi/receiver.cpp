@@ -3,10 +3,12 @@
 
 // STD
 #include <algorithm>
+#include <cstdint>
 #include <future>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 // APSI
 #include "apsi/log.h"
@@ -405,7 +407,8 @@ namespace apsi {
                 for (int i = 0; i < 8; ++i) {
                     truncate_item |= static_cast<uint64_t>(item[i]) << (8 * i);
                 }
-                plain_powers.emplace_back(std::move(truncate_item), params_, pd_);
+                plain_powers.emplace_back(
+                    std::move(std::vector<uint64_t>{ truncate_item }), params_, pd_);
                 auto encrypted_power(plain_powers[item_idx].encrypt(crypto_context_));
                 // std::move the encrypted data to encrypted_powers
                 for (auto &e : encrypted_power) {
@@ -431,7 +434,8 @@ namespace apsi {
             ThreadPoolMgr tpm;
 
             // Create query and send to Sender
-            auto query = create_query(items);
+            // auto query = create_query(items);
+            auto query = create_query_ours(items);
             chl.send(std::move(query.first));
             auto itt = std::move(query.second);
 

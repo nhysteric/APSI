@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 
 // STD
-#include <cstddef>
-#include <cstdint>
 #include <stdexcept>
 #include <thread>
 
@@ -12,9 +10,6 @@
 #include "apsi/oprf/oprf_sender.h"
 #include "apsi/requests.h"
 #include "apsi/zmq/sender_dispatcher.h"
-
-// SEAL
-#include "seal/util/common.h"
 
 using namespace std;
 using namespace seal;
@@ -173,7 +168,29 @@ namespace apsi {
                 Query query(to_query_request(std::move(sop->sop)), sender_db_);
 
                 // Query will send result to client in a stream of ResultPackages (ResultParts)
-                Sender::RunQuery(
+                // Sender::RunQuery(
+                //     query,
+                //     chl,
+                //     // Lambda function for sending the query response
+                //     [&sop](Channel &c, Response response) {
+                //         auto nsop_response = make_unique<ZMQSenderOperationResponse>();
+                //         nsop_response->sop_response = std::move(response);
+                //         nsop_response->client_id = sop->client_id;
+
+                //         // We know for sure that the channel is a SenderChannel so use
+                //         static_cast static_cast<ZMQSenderChannel
+                //         &>(c).send(std::move(nsop_response));
+                //     },
+                //     // Lambda function for sending the result parts
+                //     [&sop](Channel &c, ResultPart rp) {
+                //         auto nrp = make_unique<ZMQResultPackage>();
+                //         nrp->rp = std::move(rp);
+                //         nrp->client_id = sop->client_id;
+
+                //         // We know for sure that the channel is a SenderChannel so use
+                //         static_cast static_cast<ZMQSenderChannel &>(c).send(std::move(nrp));
+                //     });
+                Sender::RunQuery_Ours(
                     query,
                     chl,
                     // Lambda function for sending the query response
@@ -194,6 +211,7 @@ namespace apsi {
                         // We know for sure that the channel is a SenderChannel so use static_cast
                         static_cast<ZMQSenderChannel &>(c).send(std::move(nrp));
                     });
+
             } catch (const exception &ex) {
                 APSI_LOG_ERROR("Sender threw an exception while processing query: " << ex.what());
             }

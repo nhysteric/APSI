@@ -2,9 +2,18 @@
 // Licensed under the MIT license.
 
 // STD
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <future>
+#include <seal/ciphertext.h>
+#include <seal/plaintext.h>
+#include <seal/serialization.h>
+#include <unordered_map>
+#include <vector>
 
 // APSI
+#include "apsi/bin_bundle.h"
 #include "apsi/crypto_context.h"
 #include "apsi/log.h"
 #include "apsi/network/channel.h"
@@ -124,7 +133,7 @@ namespace apsi {
             // Acquire read lock on SenderDB
             auto sender_db = query.sender_db();
             auto sender_db_lock = sender_db->get_reader_lock();
-
+            auto poly = sender_db->get_poly_ours();
             STOPWATCH(sender_stopwatch, "Sender::RunQuery");
             APSI_LOG_INFO(
                 "Start processing query request on database with " << sender_db->get_item_count()
@@ -147,6 +156,88 @@ namespace apsi {
                 APSI_LOG_ERROR(
                     "Failed to send response to query request; function threw an exception: "
                     << ex.what());
+                throw;
+            }
+
+            // Extract data
+            vector<FEltPolyn> polyns;
+            compr_mode_type compr_mode = compr_mode_type::none;
+            std::vector<Plaintext> batched_coeffs;
+            for (auto &q : query.data()) {
+                APSI_LOG_DEBUG("Query data: " << q.first << " " << q.second.size());
+                polyns.emplace_back(poly.at(q.first));
+            }
+            // Find the highest degree polynomial in the list. The max degree determines how many
+            // Plaintexts we need to make
+            size_t max_deg = 0;
+            for (const FEltPolyn &p : polyns) {
+                // Degree = number of coefficients - 1
+                max_deg = max(p.size(), max_deg + 1) - 1;
+            }
+            // We will encode with parameters that leave one or two levels, depending on whether
+            // Paterson-Stockmeyer is used.
+            size_t plain_coeffs_chain_idx =
+                min<size_t>(crypto_context.seal_context()->first_context_data()->chain_index(), 1);
+            auto encode_parms_id =
+                get_parms_id_for_chain_idx(*crypto_context.seal_context(), plain_coeffs_chain_idx);
+
+            size_t num_polyns = polyns.size();
+            for (size_t i = 0; i < max_deg + 1; i++) {
+                // Go through all the bins, collecting the coefficients at degree i
+                vector<felt_t> coeffs_of_deg_i;
+                coeffs_of_deg_i.reserve(num_polyns);
+                for (const FEltPolyn &p : polyns) {
+                    // Get the coefficient if it's set. Otherwise it's zero
+                    felt_t coeff = 0;
+                    if (i < p.size()) {
+                        coeff = p[i];
+                    }
+
+                    coeffs_of_deg_i.push_back(coeff);
+                }
+
+                // Now let pt be the Plaintext consisting of all those degree i coefficients
+                Plaintext pt;
+                crypto_context.encoder()->encode(coeffs_of_deg_i, pt);
+                // When evaluating the match and interpolation polynomials on encrypted query data,
+                // we multiply each power of the encrypted query with a plaintext (pt here)
+                // corresponding to the polynomial coefficient, and add the results together. The
+                // constant coefficient is handled by simply adding to the result,  which requires
+                // that the plaintext is not in NTT form. When Paterson-Stockmeyer is used, this
+                // applies also to the constant coefficients for all inner polynomials, i.e., with
+                // i a multiple of the ps_high_degree == ps_low_degree + 1.
+
+                if (i != 0) {
+                    crypto_context.evaluator()->transform_to_ntt_inplace(pt, encode_parms_id);
+                }
+
+                batched_coeffs.push_back(std::move(pt));
+            }
+            Ciphertext temp;
+            unordered_map<uint32_t, SEALObject<Ciphertext>> result;
+            for (auto &c : query.data()) {
+                Ciphertext temp_result;
+                for (size_t deg = 1; deg < max_deg; deg++) {
+                    crypto_context.evaluator()->multiply_plain(
+                        c.second[deg], batched_coeffs[deg], temp);
+                    crypto_context.evaluator()->add_inplace(temp_result, temp);
+                }
+                crypto_context.evaluator()->transform_from_ntt_inplace(temp_result);
+                crypto_context.evaluator()->add_plain_inplace(temp_result, batched_coeffs[0]);
+                result[c.first] = std::move(temp_result);
+            }
+
+            auto rp = make_unique<ResultPackage>();
+            rp->compr_mode = compr_mode;
+            rp->bundle_idx = 0;
+            rp->nonce_byte_count = safe_cast<uint32_t>(sender_db->get_nonce_byte_count());
+            rp->label_byte_count = safe_cast<uint32_t>(sender_db->get_label_byte_count());
+            rp->psi_result_ours = std::move(result);
+            try {
+                send_rp_fun(chl, std::move(rp));
+            } catch (const exception &ex) {
+                APSI_LOG_ERROR(
+                    "Failed to send result part; function threw an exception: " << ex.what());
                 throw;
             }
         }
