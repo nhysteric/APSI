@@ -3,12 +3,16 @@
 
 // STD
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <future>
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <seal/plaintext.h>
+#include <seal/util/uintcore.h>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -41,6 +45,11 @@ namespace apsi {
 
     namespace sender {
         namespace {
+
+            inline std::string uint64_to_hex_string(std::uint64_t value)
+            {
+                return seal::util::uint_to_hex_string(&value, std::size_t(1));
+            }
             /**
             Creates and returns the vector of hash functions similarly to how Kuku 2.x sets them
             internally.
@@ -218,6 +227,7 @@ namespace apsi {
                     for (int i = 0; i < 8; ++i) {
                         truncate_item |= static_cast<uint64_t>(item.value()[i]) << (8 * i);
                     }
+                    truncate_item %= params.seal_params().plain_modulus().value();
                     // Get the cuckoo table locations for this item and add to data_with_indices
                     for (auto location : all_locations(hash_funcs, item)) {
                         // The current hash value is an index into a table of Items. In reality our
@@ -995,7 +1005,12 @@ namespace apsi {
                 const auto &mod =
                     crypto_context_.seal_context()->first_context_data()->parms().plain_modulus();
                 auto fmp = polyn_with_roots(p.second, mod);
-                poly_ours[p.first] = std::move(fmp);
+                vector<Plaintext> poly_plain;
+                for (auto &v : fmp) {
+                    Plaintext plain(uint64_to_hex_string(v));
+                    poly_plain.emplace_back(std::move(plain));
+                }
+                poly_ours_plaintext[p.first] = std::move(poly_plain);
             }
         }
 

@@ -60,7 +60,7 @@ namespace apsi {
 
             SEALObject<seal::Ciphertext> psi_result;
 
-            std::unordered_map<uint32_t, SEALObject<seal::Ciphertext>> psi_result_ours;
+            // std::unordered_map<uint32_t, SEALObject<seal::Ciphertext>> psi_result;
 
             std::uint32_t label_byte_count;
 

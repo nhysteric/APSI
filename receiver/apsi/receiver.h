@@ -5,6 +5,7 @@
 
 // STD
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <set>
@@ -153,6 +154,11 @@ namespace apsi {
                 const std::vector<LabelKey> &label_keys,
                 network::NetworkChannel &chl);
 
+            std::pair<std::unordered_map<uint32_t,MatchRecord>,std::unordered_map<size_t, size_t>> request_query_ours(
+                const std::vector<HashedItem> &items,
+                const std::vector<LabelKey> &label_keys,
+                network::NetworkChannel &chl);
+
             /**
             Creates and returns a parameter request that can be sent to the sender with the
             Receiver::SendRequest function.
@@ -226,6 +232,11 @@ namespace apsi {
                 const std::vector<LabelKey> &label_keys,
                 const IndexTranslationTable &itt,
                 network::Channel &chl) const;
+
+            std::pair<uint32_t,MatchRecord> process_result_ours(
+                const std::vector<LabelKey> &label_keys,
+                const IndexTranslationTable &itt,
+                const ResultPart &result) const;
 
             void initialize();
 

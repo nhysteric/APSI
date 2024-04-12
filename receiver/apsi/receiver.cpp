@@ -8,11 +8,14 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 // APSI
 #include "apsi/log.h"
+#include "apsi/match_record.h"
 #include "apsi/network/channel.h"
+#include "apsi/network/result_package.h"
 #include "apsi/plaintext_powers.h"
 #include "apsi/receiver.h"
 #include "apsi/thread_pool_mgr.h"
@@ -371,7 +374,7 @@ namespace apsi {
 
             {
                 STOPWATCH(recv_stopwatch, "Receiver::create_query::cuckoo_hashing");
-                APSI_LOG_DEBUG(
+                APSI_LOG_INFO(
                     "Inserting " << items.size() << " items into cuckoo table of size "
                                  << cuckoo.table_size() << " with " << cuckoo.loc_func_count()
                                  << " hash functions");
@@ -407,11 +410,22 @@ namespace apsi {
                 for (int i = 0; i < 8; ++i) {
                     truncate_item |= static_cast<uint64_t>(item[i]) << (8 * i);
                 }
+                truncate_item %= params_.seal_params().plain_modulus().value();
                 plain_powers.emplace_back(
                     std::move(std::vector<uint64_t>{ truncate_item }), params_, pd_);
                 auto encrypted_power(plain_powers[item_idx].encrypt(crypto_context_));
+                vector<pair<uint32_t, SEALObject<Ciphertext>>> encrypted_power_vec;
+                encrypted_power_vec.reserve(encrypted_power.size());
+                for (auto &&pair : encrypted_power) {
+                    encrypted_power_vec.emplace_back(pair);
+                }
+                auto cmp = [](const pair<uint32_t, SEALObject<Ciphertext>> &a,
+                              const pair<uint32_t, SEALObject<Ciphertext>> &b) {
+                    return a.first < b.first;
+                };
+                sort(encrypted_power_vec.begin(), encrypted_power_vec.end(), cmp);
                 // std::move the encrypted data to encrypted_powers
-                for (auto &e : encrypted_power) {
+                for (auto &e : encrypted_power_vec) {
                     allPowers[item_loc.location()].emplace_back(std::move(e.second));
                 }
             }
@@ -435,7 +449,7 @@ namespace apsi {
 
             // Create query and send to Sender
             // auto query = create_query(items);
-            auto query = create_query_ours(items);
+            auto query = create_query(items);
             chl.send(std::move(query.first));
             auto itt = std::move(query.second);
 
@@ -480,6 +494,57 @@ namespace apsi {
                 }) << " matches");
 
             return mrs;
+        }
+
+        pair<unordered_map<uint32_t, MatchRecord>, unordered_map<size_t, size_t>>
+        Receiver::request_query_ours(
+            const vector<HashedItem> &items,
+            const vector<LabelKey> &label_keys,
+            NetworkChannel &chl)
+        {
+            ThreadPoolMgr tpm;
+
+            // Create query and send to Sender
+            // auto query = create_query(items);
+            auto query = create_query_ours(items);
+            chl.send(std::move(query.first));
+            auto itt = std::move(query.second);
+
+            // Wait for query response
+            QueryResponse response;
+            bool logged_waiting = false;
+            while (!(response = to_query_response(chl.receive_response()))) {
+                if (!logged_waiting) {
+                    // We want to log 'Waiting' only once, even if we have to wait for several
+                    // sleeps.
+                    logged_waiting = true;
+                    APSI_LOG_INFO("Waiting for response to query request");
+                }
+
+                this_thread::sleep_for(50ms);
+            }
+
+            atomic<uint32_t> package_count{ response->package_count };
+
+            // Set up the result
+            unordered_map<uint32_t, MatchRecord> mrs(query.second.item_count());
+            uint32_t task = 0;
+            while (task < package_count) {
+                ResultPart result_part;
+
+                while (!(result_part = chl.receive_result(get_seal_context())))
+                    ;
+
+                mrs.insert(process_result_ours(label_keys, itt, result_part));
+
+                // APSI_LOG_INFO(
+                //     "Found " << accumulate(mrs.begin(), mrs.end(), 0, [](auto acc, auto &curr) {
+                //         return acc + curr.found;
+                //     }) << " matches");
+                task++;
+            }
+
+            return make_pair(std::move(mrs), std::move(itt.table_idx_to_item_idx_));
         }
 
         vector<MatchRecord> Receiver::process_result_part(
@@ -749,6 +814,17 @@ namespace apsi {
                     }
                 });
             }
+        }
+
+        pair<uint32_t, MatchRecord> Receiver::process_result_ours(
+            const vector<LabelKey> &label_keys,
+            const IndexTranslationTable &itt,
+            const ResultPart &result) const
+        {
+            PlainResultPackage plain_rp = result->extract(crypto_context_);
+            MatchRecord mrs;
+            mrs.found = plain_rp.psi_result[0] == 0;
+            return make_pair(plain_rp.bundle_idx, mrs);
         }
     } // namespace receiver
 } // namespace apsi

@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <seal/plaintext.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -300,6 +301,11 @@ namespace apsi {
                 return poly_ours;
             }
 
+            std::unordered_map<uint32_t, std::vector<seal::Plaintext>> get_poly_ours_plaintext() const
+            {
+                return poly_ours_plaintext;
+            }
+
         private:
             SenderDB(const SenderDB &copy) = delete;
 
@@ -318,6 +324,8 @@ namespace apsi {
             std::unordered_set<HashedItem> hashed_items_;
 
             std::unordered_map<uint32_t, FEltPolyn> poly_ours;
+
+            std::unordered_map<uint32_t, std::vector<seal::Plaintext>> poly_ours_plaintext;
 
             /**
             The PSI parameters define the SEAL parameters, base field, item size, table size, etc.

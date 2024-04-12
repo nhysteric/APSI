@@ -2,10 +2,13 @@
 // Licensed under the MIT license.
 
 // STD
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 #if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__clang__)
 #include <experimental/filesystem>
@@ -55,7 +58,12 @@ int remote_query(const CLP &cmd);
 string get_conn_addr(const CLP &cmd);
 
 pair<unique_ptr<CSVReader::DBData>, vector<string>> load_db(const string &db_file);
-
+void print_intersection_results_ours(
+    const vector<string> &orig_items,
+    const vector<Item> &items,
+    const unordered_map<uint32_t, MatchRecord> &intersection,
+    const std::unordered_map<size_t, size_t> &index_table,
+    const string &out_file);
 void print_intersection_results(
     const vector<string> &orig_items,
     const vector<Item> &items,
@@ -125,17 +133,26 @@ int remote_query(const CLP &cmd)
         return -1;
     }
 
-    vector<MatchRecord> query_result;
+    unordered_map<uint32_t, MatchRecord> query_result;
+    unordered_map<size_t, size_t> index_table;
     try {
         APSI_LOG_INFO("Sending APSI query");
-        query_result = receiver.request_query(oprf_items, label_keys, channel);
-        APSI_LOG_INFO("Received APSI query response");
+        auto [x, y] = receiver.request_query_ours(oprf_items, label_keys, channel);
+        APSI_LOG_INFO("Received APSI query response!");
+        query_result = std::move(x);
+        index_table = std::move(y);
     } catch (const exception &ex) {
         APSI_LOG_WARNING("Failed sending APSI query: " << ex.what());
         return -1;
     }
 
-    print_intersection_results(orig_items, items_vec, query_result, cmd.output_file());
+    print_intersection_results_ours(
+        orig_items, items_vec, query_result, index_table, cmd.output_file());
+    // for (auto &r : query_result) {
+    //     if (r.second.found) {
+    //         APSI_LOG_INFO("Found item " << r.first);
+    //     }
+    // }
     print_transmitted_data(channel);
     print_timing_report(recv_stopwatch);
 
@@ -178,6 +195,39 @@ void print_intersection_results(
                 msg << Colors::GreenBold << intersection[i].label.to_string() << Colors::Reset;
                 csv_output << "," << intersection[i].label.to_string();
             }
+            csv_output << endl;
+            APSI_LOG_INFO(msg.str());
+        } else {
+            // msg << Colors::RedBold << orig_items[i] << Colors::Reset << " (NOT FOUND)";
+            // APSI_LOG_INFO(msg.str());
+        }
+    }
+
+    if (!out_file.empty()) {
+        ofstream ofs(out_file);
+        ofs << csv_output.str();
+        APSI_LOG_INFO("Wrote output to " << out_file);
+    }
+}
+
+void print_intersection_results_ours(
+    const vector<string> &orig_items,
+    const vector<Item> &items,
+    const unordered_map<uint32_t, MatchRecord> &intersection,
+    const std::unordered_map<size_t,size_t> &index_table,
+    const string &out_file)
+{
+    if (orig_items.size() != items.size()) {
+        throw invalid_argument("orig_items must have same size as items");
+    }
+
+    stringstream csv_output;
+    for (auto &p : intersection) {
+        stringstream msg;
+        if (p.second.found) {
+            msg << Colors::GreenBold << orig_items[index_table.at(p.first)] << Colors::Reset
+                << " (FOUND)";
+            csv_output << orig_items[index_table.at(p.first)];
             csv_output << endl;
             APSI_LOG_INFO(msg.str());
         } else {
