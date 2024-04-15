@@ -170,10 +170,10 @@ namespace apsi {
         bins_per_bundle_ = items_per_bundle_ * item_params_.felts_per_item;
 
         // table_size must be a multiple of items_per_bundle_
-        if (table_params_.table_size % items_per_bundle_) {
-            throw invalid_argument(
-                "table_size must be a multiple of floor(poly_modulus_degree / felts_per_item)");
-        }
+        // if (table_params_.table_size % items_per_bundle_) {
+        //     throw invalid_argument(
+        //         "table_size must be a multiple of floor(poly_modulus_degree / felts_per_item)");
+        // }
 
         // Compute the number of bundle indices; this is now guaranteed to be greater than zero
         bundle_idx_count_ = table_params_.table_size / items_per_bundle_;

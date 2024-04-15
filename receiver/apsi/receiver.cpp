@@ -21,6 +21,7 @@
 #include "apsi/thread_pool_mgr.h"
 #include "apsi/util/db_encoding.h"
 #include "apsi/util/label_encryptor.h"
+#include "apsi/util/stopwatch.h"
 #include "apsi/util/utils.h"
 
 // SEAL
@@ -496,11 +497,11 @@ namespace apsi {
             return mrs;
         }
 
-        pair<unordered_map<uint32_t, MatchRecord>, unordered_map<size_t, size_t>>
-        Receiver::request_query_ours(
-            const vector<HashedItem> &items,
-            const vector<LabelKey> &label_keys,
-            NetworkChannel &chl)
+        pair<unordered_map<uint32_t, MatchRecord>, unordered_map<size_t, size_t>> Receiver::
+            request_query_ours(
+                const vector<HashedItem> &items,
+                const vector<LabelKey> &label_keys,
+                NetworkChannel &chl)
         {
             ThreadPoolMgr tpm;
 
@@ -509,7 +510,7 @@ namespace apsi {
             auto query = create_query_ours(items);
             chl.send(std::move(query.first));
             auto itt = std::move(query.second);
-
+            STOPWATCH(recv_stopwatch, "Receiver::request_query_ours");
             // Wait for query response
             QueryResponse response;
             bool logged_waiting = false;
@@ -524,8 +525,8 @@ namespace apsi {
                 this_thread::sleep_for(50ms);
             }
 
-            atomic<uint32_t> package_count{ response->package_count };
-
+            uint32_t package_count{ response->package_count };
+            STOPWATCH(recv_stopwatch, "Process Time");
             // Set up the result
             unordered_map<uint32_t, MatchRecord> mrs(query.second.item_count());
             uint32_t task = 0;

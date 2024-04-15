@@ -1,0 +1,26 @@
+{
+    "table_params": {
+        "hash_func_count": 2,
+        "table_size": 100000,
+        "max_items_per_bin": 4
+    },
+    "item_params": {
+        "felts_per_item": 5
+    },
+    "query_params": {
+        "ps_low_degree": 0,
+        "query_powers": [
+            1,
+            2,
+            3,
+            4
+        ]
+    },
+    "seal_params": {
+        "plain_modulus": 65537,
+        "poly_modulus_degree": 2048,
+        "coeff_modulus_bits": [
+            48
+        ]
+    }
+}

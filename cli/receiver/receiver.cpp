@@ -214,7 +214,7 @@ void print_intersection_results_ours(
     const vector<string> &orig_items,
     const vector<Item> &items,
     const unordered_map<uint32_t, MatchRecord> &intersection,
-    const std::unordered_map<size_t,size_t> &index_table,
+    const std::unordered_map<size_t, size_t> &index_table,
     const string &out_file)
 {
     if (orig_items.size() != items.size()) {
@@ -222,6 +222,7 @@ void print_intersection_results_ours(
     }
 
     stringstream csv_output;
+    size_t i = 0;
     for (auto &p : intersection) {
         stringstream msg;
         if (p.second.found) {
@@ -230,12 +231,13 @@ void print_intersection_results_ours(
             csv_output << orig_items[index_table.at(p.first)];
             csv_output << endl;
             APSI_LOG_INFO(msg.str());
+            i++;
         } else {
             // msg << Colors::RedBold << orig_items[i] << Colors::Reset << " (NOT FOUND)";
             // APSI_LOG_INFO(msg.str());
         }
     }
-
+    APSI_LOG_INFO("Found " << i << " items");
     if (!out_file.empty()) {
         ofstream ofs(out_file);
         ofs << csv_output.str();
